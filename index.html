@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>CS 4731 Final Project Part I</title>
+        <script id="vshader" type="x-shader/x-vertex">
+            attribute vec4 vPosition;
+            attribute vec4 vNormal;
+            attribute vec4 vColor;
+            uniform mat4 uModelViewMatrix;
+            uniform mat4 uProjectionMatrix;
+
+            attribute vec4 vDiffuseColor;
+            attribute vec4 vSpecularColor;
+
+            uniform vec4 diffuseProduct;
+            uniform vec4 lightPosition;
+
+            
+            varying vec4 fColor;
+
+            void main() {
+
+                vec3 pos = (uModelViewMatrix * vPosition).xyz;
+                vec3 L = normalize(lightPosition.xyz - pos);
+
+                vec3 N = normalize(uModelViewMatrix * vNormal).xyz;
+
+                vec4 diffuse = diffuseProduct * dot(L, N);
+
+                gl_Position = uProjectionMatrix * uModelViewMatrix * vPosition;
+                fColor = vDiffuseColor;
+            }
+        </script>
+
+        <script id="fshader" type="x-shader/x-fragment">
+            precision mediump float;
+
+            varying vec4 fColor;
+
+            varying vec4 vDiffuseColor;
+            varying vec4 vSpecularColor;
+
+            void main() {
+                    gl_FragColor = fColor;
+                }
+        </script>
+
+        <script type="text/javascript" src="lib/webgl-utils.js"></script>
+        <script type="text/javascript" src="lib/initShaders.js"></script>
+        <script type="text/javascript" src="lib/MV.js"></script>
+
+        <script type="text/javascript" src="lib/model.js"></script>
+        <script type="text/javascript" src="lib/face.js"></script>
+        <script type="text/javascript" src="main.js"></script>
+
+    </head>
+
+    <body onload="main()">
+        <h1 id="mode">CS 4731 Final Project</h1>
+
+        <canvas id="webgl" class="box" width="1600" height="900">
+            Please use a browser that supports the "canvas" tag.
+        </canvas>
+    </body>
+</html>
