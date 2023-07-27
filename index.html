@@ -6,46 +6,87 @@
         <script id="vshader" type="x-shader/x-vertex">
             attribute vec4 vPosition;
             attribute vec4 vNormal;
-            attribute vec4 vColor;
-            uniform mat4 uModelViewMatrix;
-            uniform mat4 uProjectionMatrix;
-
             attribute vec4 vDiffuseColor;
             attribute vec4 vSpecularColor;
 
-            uniform vec4 diffuseProduct;
+            attribute vec2 vTexCoord;
+            varying vec2 fTexCoord;
+        
+            uniform mat4 uModelViewMatrix;
+            uniform mat4 uProjectionMatrix;
+        
+            uniform vec4 ambientProduct;
+            // uniform vec4 lightDiffuse;
             uniform vec4 lightPosition;
+            // uniform vec4 lightSpecular;
+            //uniform vec4 specularProduct;
+            uniform float shininess;
 
+            uniform float lightTurnedOn;
+
+            // uniform vec4 diffuseProduct;
             
             varying vec4 fColor;
 
+            varying vec3 refl;
+            
             void main() {
-
+                vec4 ambient = ambientProduct; 
+        
                 vec3 pos = (uModelViewMatrix * vPosition).xyz;
                 vec3 L = normalize(lightPosition.xyz - pos);
+                vec3 N = normalize((uModelViewMatrix * vNormal).xyz);
+        
+                vec4 diffuse = dot(L, N) * vDiffuseColor;
+                //vec4 diffuse = max(dot(L, N), 0.0) * vDiffuseColor;
+        
+                vec3 V = -normalize(pos);
 
-                vec3 N = normalize(uModelViewMatrix * vNormal).xyz;
+                //Reflection Vector
+                vec3 R = (2.0 * dot(L,N) * N) - L;
 
-                vec4 diffuse = diffuseProduct * dot(L, N);
+                //Environment Map Reflection
+                refl = reflect(V, N);
 
+                vec3 H = normalize(L + V);
+                //vec4 specular = lightSpecular * vSpecularColor * pow(max(dot(N, H), 0.0), shininess);
+                vec4 specular = vSpecularColor * pow(max(dot(V,R), 0.0), shininess);
+        
                 gl_Position = uProjectionMatrix * uModelViewMatrix * vPosition;
-                fColor = vDiffuseColor;
+                fTexCoord = vTexCoord;
+
+                if(lightTurnedOn == 0.0){
+                    fColor = ambientProduct;
+                    fColor.a = 1.0;
+                }else{
+                    fColor = ambientProduct + diffuse + specular;
+                    fColor.a = 1.0;
+                }
+                
             }
         </script>
+        
+        
 
         <script id="fshader" type="x-shader/x-fragment">
             precision mediump float;
-
+            
             varying vec4 fColor;
 
-            varying vec4 vDiffuseColor;
-            varying vec4 vSpecularColor;
+            varying vec2 fTexCoord;
 
+            uniform sampler2D texture;
+
+            varying vec3 refl;
+
+            uniform samplerCube texMap;
+            
             void main() {
-                    gl_FragColor = fColor;
-                }
+                //gl_FragColor = texture2D(texture, fTexCoord);
+                gl_FragColor = fColor + texture2D(texture, fTexCoord);
+            }
         </script>
-
+        
         <script type="text/javascript" src="lib/webgl-utils.js"></script>
         <script type="text/javascript" src="lib/initShaders.js"></script>
         <script type="text/javascript" src="lib/MV.js"></script>
